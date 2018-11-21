@@ -1,14 +1,18 @@
 import Taro, { Component } from '@tarojs/taro'
 import { View, Text } from '@tarojs/components'
 import './index.scss'
+import TabBar from '../../component/tabBar'
 
 export default class Index extends Component {
 
-  config = {
-    navigationBarTitleText: '首页'
+  constructor(props) {
+    super(props)
   }
 
-  componentWillMount () { }
+  config = {
+    navigationBarTitleText: '我的关注'
+  }
+  componentWillMount () {}
 
   componentDidMount () { }
 
@@ -21,7 +25,7 @@ export default class Index extends Component {
   render () {
     return (
       <View className='index'>
-        <Text>Hello world!</Text>
+        <Text>我的关注</Text>
       </View>
     )
   }
