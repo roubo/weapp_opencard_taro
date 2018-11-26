@@ -1,0 +1,27 @@
+.page {
+  background-color: #f8f8f8;
+  .item {
+    .title {
+      //background-color: white;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      .div {
+        background-color: coral;
+        width: 4px;
+        height: 40px;
+      }
+      .titleText {
+        margin-left: 10px;
+        font-size: 30px;
+        font-weight: bold;
+      }
+    }
+    .grid {
+      background-color: white;
+      margin-top: 10px;
+      font-size: 30px;
+    }
+  }
+}

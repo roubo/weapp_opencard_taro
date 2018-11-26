@@ -1,6 +1,5 @@
 import Taro, { Component } from '@tarojs/taro'
 import Index from './pages/mycard/index'
-import TabBar from './component/tabBar'
 
 import './app.scss'
 
@@ -11,6 +10,8 @@ class App extends Component {
       'pages/mycard/index',
       'pages/myfollow/index',
       'pages/feedback/index',
+      'pages/setting/index',
+      'pages/search/index',
     ],
     window: {
       backgroundTextStyle: 'light',
@@ -22,7 +23,7 @@ class App extends Component {
       color: '#626567',
       selectedColor: '#0e932e',
       backgroundColor: '#FBFBFB55',
-      borderStyle: 'white',
+      borderStyle: 'black',
       list: [
         {
           pagePath: 'pages/mycard/index',
@@ -35,6 +36,12 @@ class App extends Component {
           text: '我的关注',
           iconPath: './asset/images/follow.png',
           selectedIconPath: './asset/images/follow_focus.png'
+        },
+        {
+          pagePath: 'pages/setting/index',
+          text: '配置名片',
+          iconPath: './asset/images/setting.png',
+          selectedIconPath: './asset/images/setting_focus.png'
         },
         {
           pagePath: 'pages/feedback/index',
@@ -59,7 +66,7 @@ class App extends Component {
   // 请勿修改此函数
   render () {
     return (
-      <TabBar/>
+      <Index />
     )
   }
 }
