@@ -2,6 +2,8 @@ import Taro, { Component } from '@tarojs/taro'
 import { View, Text } from '@tarojs/components'
 import {AtButton, AtDivider, AtForm, AtInput, AtToast} from 'taro-ui'
 import './index.scss'
+import apis from "../../../../apis/apis";
+import MyToast from '../../../../component/myToast'
 
 export default class Connect extends Component {
 
@@ -12,7 +14,8 @@ export default class Connect extends Component {
       phoneNumber: '',
       emailAddress: '',
       isSubmited: false,
-      submitText: '提交'
+      submitText: '提交',
+      showToast: false
     }
   }
 
@@ -53,9 +56,9 @@ export default class Connect extends Component {
     Taro.getStorage({key: 'baseInfo'}).then(
       (res) => {
         this.setState({
-          realName: res.data.realName,
-          phoneNumber: res.data.phoneNumber,
-          emailAddress: res.data.emailAddress,
+          realName: res.data.name,
+          phoneNumber: res.data.phone,
+          emailAddress: res.data.email,
           isSubmited: true,
           submitText: '重新提交'
         })
@@ -68,6 +71,19 @@ export default class Connect extends Component {
         console.log(JSON.stringify(res))
       }
     )
+    const openid = Taro.getStorageSync('openid')
+    apis.opencard('save', 'from=connect&phone='
+      +encodeURIComponent(this.state.phoneNumber)
+      +'&email='+ encodeURIComponent(this.state.emailAddress)
+      +'&name=' + encodeURIComponent(this.state.realName)
+      +'&openid=' + openid, {
+      success: (res) => {
+        console.log(JSON.stringify(res))
+        this.setState({
+          showToast: true
+        })
+      }
+    })
   }
 
   render () {
@@ -113,7 +129,12 @@ export default class Connect extends Component {
               <AtButton formType='submit'>{this.state.submitText}</AtButton>
             </View>
           </AtForm>
-
+          <MyToast
+            isOpened={this.state.showToast}
+            text='提交成功'
+            status='success'
+            icon='check'
+          />
         </View>
       </View>
     )

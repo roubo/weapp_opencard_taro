@@ -116,7 +116,10 @@ export default class Index extends Component {
   }
 
   onClickArticle = (item, index) => {
-
+    console.log('xxxxx')
+    Taro.navigateTo({
+      url: '../search/index?type=article&title=' + this.state.articleData[index].value
+    })
   }
 
   onClickAttitude = (item, index) => {

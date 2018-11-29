@@ -1,0 +1,21 @@
+.page {
+  .explain {
+    display: flex;
+    flex-direction: column;
+    padding-left: 20px;
+    padding-right: 20px;
+    .tip {
+      font-size: smaller;
+      font-weight: lighter;
+    }
+    .explainText {
+      margin-top: 10px;
+      font-size: small;
+    }
+    .selectText {
+      font-weight: bolder;
+      margin-top: 10px;
+      font-size: small;
+    }
+  }
+}
