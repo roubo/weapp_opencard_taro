@@ -15,6 +15,7 @@ export default class Index extends Component {
       data : null,
       baseInfo: null,
       juejin: null,
+      jianshu: null,
       enough: true
     }
   }
@@ -38,6 +39,15 @@ export default class Index extends Component {
     if (juejin !== '') {
       this.setState({
         juejin: juejin,
+        data: [],
+        enough: false
+      })
+    }
+
+    const jianshu = Taro.getStorageSync('jianshu')
+    if (jianshu !== '') {
+      this.setState({
+        jianshu: jianshu,
         data: [],
         enough: false
       })
@@ -134,6 +144,23 @@ export default class Index extends Component {
         )
       }
     })
+
+    apis.opencard('bskeys', 'from=jianshu'
+      + '&openid=' + openid, {
+      success: (res)  => {
+        this.setState({
+          jianshu: JSON.parse(res.data),
+          data: [],
+          enough: false
+
+        })
+        Taro.setStorage({key: 'jianshu', data: JSON.parse(res.data)}).then(
+          (ress) => {
+            console.log(ress)
+          }
+        )
+      }
+    })
   }
   render () {
     return (
@@ -213,6 +240,51 @@ export default class Index extends Component {
             <AtDivider />
           </View>
         }
+
+        {
+          this.state.jianshu &&
+          <View className='subitem'>
+            <View className='subtitle'>
+              <AtAvatar size='small' circle image='https://junjiancard.manmanqiusuo.com/static/images/jianshu.jpg'></AtAvatar>
+              <View className='subtitleTextContainer'>
+                <Text className='subtitleName'>{this.state.jianshu.name}(简书)</Text>
+                <Text className='subtitleInfo'>发表原创文章{this.state.jianshu.postedPosts}篇</Text>
+              </View>
+            </View>
+            <View className='juejinContainer'>
+              <View className='info'>
+                <Text className='bigNumber'>
+                  {this.state.jianshu.followers}
+                </Text>
+                <AtIcon value='bell' size='20' color='#5F5F5F' />
+                <Text className='infoText'>获得关注数</Text>
+              </View>
+              <View className='info'>
+                <Text className='bigNumber'>
+                  {this.state.jianshu.totalCollections.split('获得了')[1].split('个')[0]}
+                </Text>
+                <AtIcon value='heart' size='20' color='#5F5F5F' />
+                <Text className='infoText'>获得喜欢数</Text>
+              </View>
+              <View className='info'>
+                <Text className='bigNumber'>
+                  {this.state.jianshu.totalViews}
+                </Text>
+                <AtIcon value='eye' size='20' color='#5F5F5F' />
+                <Text className='infoText'>获得阅读数</Text>
+              </View>
+              <View className='info'>
+                <Text className='bigNumber'>
+                  {this.state.jianshu.totalCollections.split('写了')[1].split('字')[0]}
+                </Text>
+                <AtIcon value='edit' size='20' color='#5F5F5F' />
+                <Text className='infoText'>完成总字数</Text>
+              </View>
+            </View>
+            <AtDivider />
+          </View>
+        }
+
         {this.state.data || (
           <View className='divider'>
             <AtDivider>
