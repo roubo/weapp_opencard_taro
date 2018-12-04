@@ -1,5 +1,6 @@
 .page {
   background-color: #f5f5f5;
+
   .base {
     display: flex;
     flex-direction: row;
@@ -54,6 +55,26 @@
       display: flex;
       flex-direction: row;
       justify-content: space-around;
+      .echarts {
+        //position: absolute;
+        //top: 0;
+        //bottom: 0;
+        //left: 0;
+        //right: 0;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        //box-sizing: border-box;
+        //background-color: gray;
+        border-color: gray;
+        border-width: 2px;
+      }
+      ec-canvas {
+        width: 748px;
+        height: 400px;
+      }
       .info {
         display: flex;
         flex-direction: column;
@@ -95,3 +116,6 @@
     }
   }
 }
+
+
+

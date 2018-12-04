@@ -5,9 +5,70 @@ import {
 } from 'taro-ui'
 import './index.scss'
 import apis from '../../apis/apis'
+import * as echarts from '../../component/ec-canvas/echarts'
 
+/**
+ * ec-canvas 使用的注册函数
+ * @param canvas
+ * @param width
+ * @param height
+ * @returns {*}
+ */
+function initChart(canvas, width, height) {
+  console.log('width' + width)
+  console.log('height' + height)
+  const chart = echarts.init(canvas, null, {
+    width: width,
+    height: height
+  })
+  canvas.setChart(chart)
+
+  const  option = {
+    title : {
+    },
+    tooltip : {
+      trigger: 'axis'
+    },
+
+    calculable : true,
+    xAxis : [
+      {
+        show: false,
+        type : 'category',
+        boundaryGap : false,
+        data : ['周一','周二','周三','周四','周五','周六','周日']
+      }
+    ],
+    yAxis : [
+      {
+        show: false,
+        type : 'value'
+      }
+    ],
+    series : [
+      {
+        name:'成交',
+        type:'line',
+        smooth:true,
+        itemStyle: {normal: {areaStyle: {type: 'default'}}},
+        data:[1500, 200, 500, 1000, 260, 830, 710]
+      },
+    ]
+  }
+
+
+  chart.setOption(option)
+  return chart
+}
 
 export default class Index extends Component {
+
+  config = {
+    navigationBarTitleText: '我的名片',
+    usingComponents: {
+      'ec-canvas': '../../component/ec-canvas/ec-canvas'
+    }
+  }
 
   constructor(props) {
     super(props)
@@ -16,12 +77,12 @@ export default class Index extends Component {
       baseInfo: null,
       juejin: null,
       jianshu: null,
-      enough: true
+      github: null,
+      enough: true,
+      ec: {
+        onInit: initChart
+      }
     }
-  }
-
-  config = {
-    navigationBarTitleText: '我的名片'
   }
 
   /**
@@ -48,6 +109,15 @@ export default class Index extends Component {
     if (jianshu !== '') {
       this.setState({
         jianshu: jianshu,
+        data: [],
+        enough: false
+      })
+    }
+
+    const github = Taro.getStorageSync('github')
+    if (github !== '') {
+      this.setState({
+        github: github,
         data: [],
         enough: false
       })
@@ -149,16 +219,35 @@ export default class Index extends Component {
       + '&openid=' + openid, {
       success: (res)  => {
         this.setState({
-          jianshu: JSON.parse(res.data),
+          jianshu: res.data,
           data: [],
           enough: false
 
         })
-        Taro.setStorage({key: 'jianshu', data: JSON.parse(res.data)}).then(
+        Taro.setStorage({key: 'jianshu', data: res.data}).then(
           (ress) => {
             console.log(ress)
           }
         )
+      }
+    })
+
+    apis.opencard('bskeys', 'from=github'
+      + '&openid=' + openid, {
+      success: (res)  => {
+        this.setState({
+          github: res.data,
+          data: [],
+          enough: false
+        })
+        Taro.setStorage({key: 'github', data: res.data}).then(
+          (ress) => {
+            console.log(ress)
+          }
+        )
+      },
+      fail: (err) => {
+          console.warn(err)
       }
     })
   }
@@ -267,8 +356,8 @@ export default class Index extends Component {
                 <Text className='infoText'>获得喜欢数</Text>
               </View>
               <View className='info'>
-                <Text className='bigNumber'>
-                  {this.state.jianshu.totalViews}
+                <Text>
+                  --
                 </Text>
                 <AtIcon value='eye' size='20' color='#5F5F5F' />
                 <Text className='infoText'>获得阅读数</Text>
@@ -279,6 +368,38 @@ export default class Index extends Component {
                 </Text>
                 <AtIcon value='edit' size='20' color='#5F5F5F' />
                 <Text className='infoText'>完成总字数</Text>
+              </View>
+            </View>
+            <AtDivider />
+          </View>
+        }
+
+        {
+          this.state.data &&
+          <View>
+            <View className='title'>
+              <View className='div' />
+              <Text className='titleText'> 技术影响力 </Text>
+            </View>
+            <AtDivider />
+          </View>
+        }
+
+        {
+          this.state.github &&
+          <View className='subitem'>
+            <View className='subtitle'>
+              <AtAvatar size='small' circle image='https://junjiancard.manmanqiusuo.com/static/images/github.png'></AtAvatar>
+              <View className='subtitleTextContainer'>
+                <Text className='subtitleName'>{this.state.github.name}({this.state.github.login})</Text>
+                <Text className='subtitleInfo'>
+                  公开仓库{this.state.github.public_repos}个，{this.state.github.followers}个关注者
+                </Text>
+              </View>
+            </View>
+            <View className='juejinContainer'>
+              <View className='echarts'>
+                <ec-canvas id='mychart-dom-area' canvas-id='mychart-area' ec={this.state.ec}></ec-canvas>
               </View>
             </View>
             <AtDivider />
@@ -303,6 +424,7 @@ export default class Index extends Component {
         )}
       </View>
     )
+
   }
 }
 

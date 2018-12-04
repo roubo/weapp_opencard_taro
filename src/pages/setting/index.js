@@ -112,11 +112,12 @@ export default class Index extends Component {
   }
 
   onClickOpenSource = (item, index) => {
-
+    Taro.navigateTo({
+      url: '../search/index?type=opensource&title=' + this.state.opensourceData[index].value
+    })
   }
 
   onClickArticle = (item, index) => {
-    console.log('xxxxx')
     Taro.navigateTo({
       url: '../search/index?type=article&title=' + this.state.articleData[index].value
     })
