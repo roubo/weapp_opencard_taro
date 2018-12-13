@@ -14,7 +14,9 @@ export default class GitHub extends Component {
       searchResult: [],
       selectKey: null,
       showToast: false,
-      showLoading: false
+      showLoading: false,
+      repoList: [],
+      selectRepos: {},
     }
   }
 
@@ -38,6 +40,22 @@ export default class GitHub extends Component {
       (res) => {
         this.setState({
           selectKey: res.data.login,
+        })
+        if(res.data.login){
+          apis.opencard('repo', 'from=github&login=' + res.data.login, {
+            success: (ress) => {
+              this.setState({
+                repoList: ress.data
+              })
+            }
+          })
+        }
+      }
+    )
+    Taro.getStorage({key: 'repos'}).then(
+      (res) => {
+        this.setState({
+          selectRepos: res.data,
         })
       }
     )
@@ -78,7 +96,10 @@ export default class GitHub extends Component {
       success: (res) => {
         this.setState({
           showToast: true,
-          selectKey: item.login
+          selectKey: item.login,
+          searchKey: null,
+          searchResult: []
+
         })
         apis.opencard('bskeys', 'from=github'
         + '&openid=' + openid, {
@@ -90,6 +111,13 @@ export default class GitHub extends Component {
             )
           }
         })
+        apis.opencard('repo', 'from=github&login=' + item.login, {
+          success: (ress) => {
+            this.setState({
+              repoList: ress.data
+            })
+          }
+        })
       }
     })
   }
@@ -98,6 +126,19 @@ export default class GitHub extends Component {
     this.setState({
       searchKey: value
     })
+  }
+
+  onSwitchChange = (item, e) => {
+    const tmp = this.state.selectRepos
+    tmp[item.name] = e.detail.value
+    this.setState({
+      selectRepos: tmp,
+    })
+    Taro.setStorage({key:'repos', data:tmp}).then(
+      (res) => {
+        console.log(res)
+      }
+    )
   }
 
   render () {
@@ -127,6 +168,21 @@ export default class GitHub extends Component {
           {this.state.searchKey.length !== 0 && this.state.searchResult.map((item, index) => {
             return (
               <AtListItem title={item.login} onClick={this.onItemSelectedClick.bind(this, item)} key={index} />
+            )
+          })}
+        </AtList>
+
+        <AtList>
+          {this.state.repoList.length !== 0 && this.state.repoList.map((item, index) => {
+            return (
+              <AtListItem
+                hasBorder
+                switchIsCheck={item.name in this.state.selectRepos ? this.state.selectRepos[item.name]:false }
+                isSwitch
+                title={item.name}
+                onSwitchChange={this.onSwitchChange.bind(this, item)}
+                key={index}
+              />
             )
           })}
         </AtList>

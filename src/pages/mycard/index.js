@@ -7,60 +7,6 @@ import './index.scss'
 import apis from '../../apis/apis'
 import * as echarts from '../../component/ec-canvas/echarts'
 
-/**
- * ec-canvas 使用的注册函数
- * @param canvas
- * @param width
- * @param height
- * @returns {*}
- */
-function initChart(canvas, width, height) {
-  console.log('width' + width)
-  console.log('height' + height)
-  const chart = echarts.init(canvas, null, {
-    width: width,
-    height: height
-  })
-  canvas.setChart(chart)
-
-  const  option = {
-    title : {
-    },
-    tooltip : {
-      trigger: 'axis'
-    },
-
-    calculable : true,
-    xAxis : [
-      {
-        show: false,
-        type : 'category',
-        boundaryGap : false,
-        data : ['周一','周二','周三','周四','周五','周六','周日']
-      }
-    ],
-    yAxis : [
-      {
-        show: false,
-        type : 'value'
-      }
-    ],
-    series : [
-      {
-        name:'成交',
-        type:'line',
-        smooth:true,
-        itemStyle: {normal: {areaStyle: {type: 'default'}}},
-        data:[1500, 200, 500, 1000, 260, 830, 710]
-      },
-    ]
-  }
-
-
-  chart.setOption(option)
-  return chart
-}
-
 export default class Index extends Component {
 
   config = {
@@ -79,8 +25,9 @@ export default class Index extends Component {
       jianshu: null,
       github: null,
       enough: true,
-      ec: {
-        onInit: initChart
+      showEc: false,
+      ecc: {
+        onInit: this.ecInit
       }
     }
   }
@@ -113,16 +60,6 @@ export default class Index extends Component {
         enough: false
       })
     }
-
-    const github = Taro.getStorageSync('github')
-    if (github !== '') {
-      this.setState({
-        github: github,
-        data: [],
-        enough: false
-      })
-    }
-
   }
 
   /**
@@ -178,6 +115,61 @@ export default class Index extends Component {
   }
 
   /**
+   * 初始化 echarts
+   * @param canvas
+   * @param width
+   * @param height
+   * @param xdata
+   * @param ydata
+   * @returns {*}
+   */
+  initChart = (canvas, width, height, xdata, yseries) => {
+    const chart = echarts.init(canvas, null, {
+      width: width,
+      height: height
+    })
+    canvas.setChart(chart)
+    const  option = {
+      title : {
+      },
+      // grid: {
+      //   containLabel: true
+      // },
+      tooltip : {
+        show: true,
+        trigger: 'axis',
+      },
+      // calculable : true,
+      xAxis : [
+        {
+          show: true,
+          type : 'category',
+          boundaryGap : false,
+          data: xdata
+        }
+      ],
+      yAxis : [
+        {
+          show: true,
+          type : 'value'
+        }
+      ],
+     series: yseries
+    }
+    chart.setOption(option)
+    return chart
+  }
+
+  ecInit = (canvas, width, heigh) => {
+    let xdata = Taro.getStorageSync('xdata')
+    let ydata = Taro.getStorageSync('yseries')
+    for(let i in xdata) {
+      let week = parseInt(i) + 1
+      xdata[i] = 'w' + week
+    }
+    this.initChart(canvas, width, heigh, xdata, ydata)
+  }
+  /**
    * 更新页面信息
    */
   updateInfo = () => {
@@ -214,7 +206,7 @@ export default class Index extends Component {
         )
       }
     })
-
+    /*
     apis.opencard('bskeys', 'from=jianshu'
       + '&openid=' + openid, {
       success: (res)  => {
@@ -231,7 +223,7 @@ export default class Index extends Component {
         )
       }
     })
-
+    */
     apis.opencard('bskeys', 'from=github'
       + '&openid=' + openid, {
       success: (res)  => {
@@ -250,6 +242,69 @@ export default class Index extends Component {
           console.warn(err)
       }
     })
+
+    const github = Taro.getStorageSync('github')
+    console.log(github)
+    if (github !== '') {
+      this.setState({
+        github: github,
+        data: [],
+        enough: false
+      })
+      Taro.getStorage({key:'repos'}).then(
+        (res) => {
+          let repos = []
+          let promises = []
+          for (let item in res.data) {
+            if (res.data[item]) {
+              repos.push(item)
+              promises.push(
+                new Promise((resolve, reject) => {
+                  apis.opencard('contrib', 'from=github&login=' + this.state.github.login + '&repo=' + item, {
+                    success: (ress) => {
+                      resolve(ress.data)
+                    },
+                    fail: (errr) => {
+                      reject(errr)
+                    }
+                  })
+                })
+              )
+            }
+          }
+          Promise.all(promises).then((alldata) => {
+            let count = 0
+            let yseries = []
+            let xdata = []
+            let ydata = []
+            for (let repoIndex in repos) {
+              xdata = []
+              ydata = []
+              for (let i in alldata[count]){
+                xdata.push(alldata[count][i].week)
+                ydata.push(alldata[count][i].total)
+              }
+              yseries.push({
+                name: repos[repoIndex],
+                type:'line',
+                smooth:true,
+                itemStyle: {normal: {areaStyle: {type: 'default'}}},
+                data:ydata
+              })
+              count = count +  1
+            }
+            Taro.setStorageSync('xdata', xdata)
+            Taro.setStorageSync('yseries', yseries)
+            this.setState({
+              showEc: true
+            })
+          }).catch((err) => {
+            console.log("err:" + JSON.stringify(err))
+          })
+        }
+      )
+    }
+
   }
   render () {
     return (
@@ -397,11 +452,16 @@ export default class Index extends Component {
                 </Text>
               </View>
             </View>
-            <View className='juejinContainer'>
-              <View className='echarts'>
-                <ec-canvas id='mychart-dom-area' canvas-id='mychart-area' ec={this.state.ec}></ec-canvas>
+            { this.state.showEc && (
+              <View className='echartContainer'>
+                <Text className='echartTitle'>【 最近一年内的贡献活跃曲线 】</Text>
+                <View className='echartView'>
+                  <View className='echarts'>
+                    <ec-canvas id='mychart-dom-area' canvas-id='mychart-area' ec={this.state.ecc}></ec-canvas>
+                  </View>
+                </View>
               </View>
-            </View>
+            )}
             <AtDivider />
           </View>
         }
