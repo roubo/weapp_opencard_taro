@@ -12,6 +12,7 @@ class App extends Component {
       'pages/feedback/index',
       'pages/setting/index',
       'pages/search/index',
+      'pages/mycard/share',
     ],
     window: {
       backgroundTextStyle: 'light',

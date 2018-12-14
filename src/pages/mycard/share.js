@@ -5,10 +5,10 @@ import './index.scss'
 import apis from '../../apis/apis'
 import * as echarts from '../../component/ec-canvas/echarts'
 
-export default class Index extends Component {
+export default class Share extends Component {
 
   config = {
-    navigationBarTitleText: '我的名片',
+    navigationBarTitleText: '分享的名片',
     usingComponents: {
       'ec-canvas': '../../component/ec-canvas/ec-canvas'
     }
@@ -22,7 +22,6 @@ export default class Index extends Component {
       juejin: null,
       jianshu: null,
       github: null,
-      enough: true,
       showEc: false,
       ecc: {
         onInit: this.ecInit
@@ -30,41 +29,13 @@ export default class Index extends Component {
     }
   }
 
-  /**
-   * 先从存储中获取信息
-   */
-  componentWillMount () {
-
-    const baseInfo = Taro.getStorageSync('baseInfo')
-    if (baseInfo !== '') {
-      this.setState({
-        baseInfo: baseInfo
-      })
-    }
-    const juejin = Taro.getStorageSync('juejin')
-    if (juejin !== '') {
-      this.setState({
-        juejin: juejin,
-        data: [],
-        enough: false
-      })
-    }
-
-    const jianshu = Taro.getStorageSync('jianshu')
-    if (jianshu !== '') {
-      this.setState({
-        jianshu: jianshu,
-        data: [],
-        enough: false
-      })
-    }
-  }
+  componentWillMount () {}
 
 
   componentDidMount () {
     // 查询是否有登录信息，如果没有则触发一次登录流程，最终保存openid
     if(!this.isLogin()) {
-      Taro.logi({
+      Taro.login({
         success(res) {
           if ('code' in res) {
             apis.opencard('login', 'wxcode=' + res['code'], {
@@ -86,30 +57,14 @@ export default class Index extends Component {
 
   componentWillUnmount () {}
 
-  componentDidShow () {
-    // tab 切换后也刷新一下数据
-    this.updateInfo()
-  }
+  componentDidShow () {}
 
   componentDidHide () {}
 
-  /**
-   * 页面分享
-   * @returns {{title: string, path: string, imageURL: string}}
-   */
   onShareAppMessage() {
-    const openid = Taro.getStorageSync("openid")
-    const repos = Taro.getStorageSync("repos")
-    const github = Taro.getStorageSync('github')
-    let repoList = []
-    for (let item in repos) {
-      if (repos[item]) {
-        repoList.push(item)
-      }
-    }
     return {
       title: 'OpenCard 动态名片',
-      path: '/pages/mycard/share?fromOpenid=' + openid + '&repos=' + repoList + "&login=" + github.login,
+      path: '/pages/mycard/index',
       imageURL: 'https://junjiancard.manmanqiusuo.com/static/images/opencard.png'
     }
   }
@@ -120,21 +75,9 @@ export default class Index extends Component {
   isLogin = () => {
     const openid = Taro.getStorageSync('openid')
     if (openid) {
-      this.setState({
-        openid: openid
-      })
       return true
     }
     return false
-  }
-
-  /**
-   *  跳转到配置页面
-   */
-  onSettingClick = () => {
-    Taro.switchTab({
-      url: '/pages/setting/index'
-    })
   }
 
   /**
@@ -173,15 +116,15 @@ export default class Index extends Component {
           type : 'value'
         }
       ],
-     series: yseries
+      series: yseries
     }
     chart.setOption(option)
     return chart
   }
 
   ecInit = (canvas, width, heigh) => {
-    let xdata = Taro.getStorageSync('xdata')
-    let ydata = Taro.getStorageSync('yseries')
+    let xdata = Taro.getStorageSync('shareXdata')
+    let ydata = Taro.getStorageSync('shareYseries')
     for(let i in xdata) {
       let week = parseInt(i) + 1
       xdata[i] = 'w' + week
@@ -190,23 +133,17 @@ export default class Index extends Component {
   }
 
   /**
-   * 更新页面信息
+   * 更新页面信息(分享人）
    */
   updateInfo = () => {
-    const openid = Taro.getStorageSync('openid')
+    const openid = this.$router.params.fromOpenid
     apis.opencard('bskeys', 'from=juejin'
       + '&openid=' + openid, {
       success: (res)  => {
         this.setState({
           juejin: res.data,
           data: [],
-          enough: false
         })
-        Taro.setStorage({key: 'juejin', data: res.data}).then(
-          (ress) => {
-            console.log(ress)
-          }
-        )
       }
     })
 
@@ -216,113 +153,81 @@ export default class Index extends Component {
         this.setState({
           baseInfo: res.data,
           data: [],
-          enough: false
         })
-        Taro.setStorage({key: 'baseInfo', data: res.data}).then(
-          (ress) => {
-            console.log(ress)
-          }
-        )
       }
     })
-    /*
     apis.opencard('bskeys', 'from=jianshu'
       + '&openid=' + openid, {
       success: (res)  => {
         this.setState({
-          jianshu: res.data,
+          // jianshu: res.data,
           data: [],
-          enough: false
-
         })
-        Taro.setStorage({key: 'jianshu', data: res.data}).then(
-          (ress) => {
-            console.log(ress)
-          }
-        )
       }
     })
-    */
     apis.opencard('bskeys', 'from=github'
       + '&openid=' + openid, {
       success: (res)  => {
         this.setState({
           github: res.data,
           data: [],
-          enough: false
         })
-        Taro.setStorage({key: 'github', data: res.data}).then(
-          (ress) => {
-            console.log(ress)
-          }
-        )
       },
       fail: (err) => {
-          console.warn(err)
+        console.warn(err)
       }
     })
 
-    const github = Taro.getStorageSync('github')
-    console.log(github)
-    if (github !== '') {
-      this.setState({
-        github: github,
-        data: [],
-        enough: false
-      })
-      Taro.getStorage({key:'repos'}).then(
-        (res) => {
-          let repos = []
-          let promises = []
-          for (let item in res.data) {
-            if (res.data[item]) {
-              repos.push(item)
-              promises.push(
-                new Promise((resolve, reject) => {
-                  apis.opencard('contrib', 'from=github&login=' + this.state.github.login + '&repo=' + item, {
-                    success: (ress) => {
-                      resolve(ress.data)
-                    },
-                    fail: (errr) => {
-                      reject(errr)
-                    }
-                  })
-                })
-              )
+    let repos = []
+    if(this.$router.params.repos){
+      console.log(this.$router.params.repos)
+      repos = this.$router.params.repos.split(',')
+      console.log(repos)
+    }
+    let promises = []
+    for (let itemIndex in repos) {
+      promises.push(
+        new Promise((resolve, reject) => {
+          apis.opencard('contrib', 'from=github&login=' + this.$router.params.login + '&repo=' + repos[itemIndex], {
+            success: (ress) => {
+              resolve(ress.data)
+            },
+            fail: (errr) => {
+              reject(errr)
             }
-          }
-          Promise.all(promises).then((alldata) => {
-            let count = 0
-            let yseries = []
-            let xdata = []
-            let ydata = []
-            for (let repoIndex in repos) {
-              xdata = []
-              ydata = []
-              for (let i in alldata[count]){
-                xdata.push(alldata[count][i].week)
-                ydata.push(alldata[count][i].total)
-              }
-              yseries.push({
-                name: repos[repoIndex],
-                type:'line',
-                smooth:true,
-                itemStyle: {normal: {areaStyle: {type: 'default'}}},
-                data:ydata
-              })
-              count = count +  1
-            }
-            Taro.setStorageSync('xdata', xdata)
-            Taro.setStorageSync('yseries', yseries)
-            this.setState({
-              showEc: true
-            })
-          }).catch((err) => {
-            console.log("err:" + JSON.stringify(err))
           })
-        }
+        })
       )
     }
+    Promise.all(promises).then((alldata) => {
+      let count = 0
+      let yseries = []
+      let xdata = []
+      let ydata = []
+      for (let repoIndex in repos) {
+        xdata = []
+        ydata = []
+        for (let i in alldata[count]){
+          xdata.push(alldata[count][i].week)
+          ydata.push(alldata[count][i].total)
+        }
+        yseries.push({
+          name: repos[repoIndex],
+          type:'line',
+          smooth:true,
+          itemStyle: {normal: {areaStyle: {type: 'default'}}},
+          data:ydata
+        })
+        count = count +  1
+      }
+      Taro.setStorageSync('shareXdata', xdata)
+      Taro.setStorageSync('shareYseries', yseries)
+      this.setState({
+        showEc: true
+      })
+    }).catch((err) => {
+      console.log("err:" + JSON.stringify(err))
+    })
 
   }
   render () {
@@ -484,24 +389,6 @@ export default class Index extends Component {
             <AtDivider />
           </View>
         }
-
-        {this.state.data || (
-          <View className='divider'>
-            <AtDivider>
-              <AtIcon color='#858585' value='blocked' />
-            </AtDivider>
-           <AtButton className='button'  onClick={this.onSettingClick}>还没有配置您的名片哦，点击前去配置吧~</AtButton>
-          </View>
-        )}
-
-        {(this.state.enough) || (
-          <View className='divider'>
-            <AtDivider>
-              <AtIcon color='#858585' value='blocked' />
-            </AtDivider>
-            <AtButton className='button'  onClick={this.onSettingClick}>您的名片还不够丰满哦，点击配置更多吧~</AtButton>
-          </View>
-        )}
       </View>
     )
 
